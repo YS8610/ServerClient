@@ -9,10 +9,16 @@ import java.util.List;
 
 public class Cookie
 {
-    public String readCookie(String filePath) throws FileNotFoundException, IOException
+    String cookieDir;
+    public Cookie(String dir)
     {
-        List<String> list1 = new ArrayList<>();
-        list1 = Files.readAllLines(Paths.get(filePath));
-        return list1.get(0);
+        this.cookieDir = dir;
+    }
+    
+    public List<String> readCookie() throws FileNotFoundException, IOException
+    {
+        List<String> cookieList = new ArrayList<>();
+        cookieList = Files.readAllLines(Paths.get(this.cookieDir));
+        return cookieList;
     }
 }
