@@ -6,6 +6,20 @@ import java.util.Scanner;
 
 public class Client 
 {
+    //function to send msg from client to server
+    public static void sendmsg(BufferedWriter bufferedWriter, String msg)
+    {
+        try
+        {
+            bufferedWriter.write(msg);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) 
     {
@@ -22,7 +36,6 @@ public class Client
                 portNo = Integer.parseInt(ipPort[1]);
             }
         }
-
 
         Socket socket = null;
         InputStreamReader inputStreamReader = null;
@@ -45,10 +58,7 @@ public class Client
             while (true)
             {
                 String msg = scanner.nextLine();
-
-                bufferedWriter.write(msg);
-                bufferedWriter.newLine();
-                bufferedWriter.flush();
+                sendmsg(bufferedWriter, msg);
 
                 System.out.println("Server: " + bufferedReader.readLine());
 
@@ -57,7 +67,6 @@ public class Client
                     scanner.close();
                     break;
                 }
-
             }
         }
         catch (IOException e)
