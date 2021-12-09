@@ -11,9 +11,40 @@ import java.util.Random;
 
 public class Server 
 {
+    // function to send msg from server to client
+    static public void sendmsg(BufferedWriter bufferedWriter, String msg)
+    {
+        try 
+        {
+            bufferedWriter.write(msg);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+    }
 
     public static void main( String[] args ) throws UnknownHostException, IOException 
     {
+        int portNo = 3000;
+        String fileName = "cookies.txt";
+
+        if (null!=args && args.length>0) //check for command line argument
+        {
+            String[] portFile = args[1].split(" ");
+            if (portFile.length==2)
+            {
+                portNo = Integer.parseInt(portFile[0]);
+                fileName = portFile[1];
+            }
+            else
+            {
+                System.out.println("Default portno: "+ portNo+"\n" + fileName+" will be used ");
+            }
+        }
+
         Cookie cookietxt = new Cookie("./cookies.txt");
         List<String> listofCookies = cookietxt.readCookie();
         
@@ -35,24 +66,28 @@ public class Server
                 System.out.println("Client connected..");
                 inputStreamReader = new InputStreamReader(socket.getInputStream());
                 outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-                
+
                 bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedWriter = new BufferedWriter(outputStreamWriter);
-                
+
                 while (true)
                 {
                     String msgfromclient = bufferedReader.readLine(); //receive msg from client
                     System.out.println("Client: " + msgfromclient);
                     
-                    // String randomCookie = listofCookies.get(5);
-                    String randomCookie = listofCookies.get(new Random().nextInt(listofCookies.size()));
-                    bufferedWriter.write("echo " + randomCookie);
-                    bufferedWriter.newLine();
-                    bufferedWriter.flush();
                     
                     if (msgfromclient.equalsIgnoreCase("close"))
                     {
                         break;
+                    }
+                    else if (msgfromclient.equalsIgnoreCase("get-cookies"))
+                    {
+                        String randomCookie = listofCookies.get(new Random().nextInt(listofCookies.size()));
+                        sendmsg(bufferedWriter, "cookie-text " + randomCookie);
+                    }
+                    else
+                    {
+                        sendmsg(bufferedWriter, "Wrong command. Only 2 commands(get-cookies and close) are accepted.");
                     }
                 }
 
