@@ -47,7 +47,7 @@ public class Client
         try 
         {
             socket = new Socket(ip,portNo); //Connect to server 
-            
+            System.out.println("Connected. Accepting input...");
             inputStreamReader = new InputStreamReader(socket.getInputStream()); //read from server
             outputStreamWriter = new OutputStreamWriter(socket.getOutputStream()); //send stuff to server
 
