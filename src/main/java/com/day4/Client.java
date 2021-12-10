@@ -29,13 +29,14 @@ public class Client
 
         if (null!=args && args.length>0) //check for command line argument
         {
-            String[] ipPort = args[1].split(":");
+            String[] ipPort = args[0].split(":");
             if (ipPort.length==2)
             {
                 ip = ipPort[0];
                 portNo = Integer.parseInt(ipPort[1]);
             }
         }
+        System.out.println("Connecting to ip: "+ip + " port: " + portNo);
 
         Socket socket = null;
         InputStreamReader inputStreamReader = null;
