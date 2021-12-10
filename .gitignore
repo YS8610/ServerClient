@@ -3,7 +3,7 @@
 
 # Log file
 *.log
-cookies.txt
+*.ps1
 
 # BlueJ files
 *.ctxt
