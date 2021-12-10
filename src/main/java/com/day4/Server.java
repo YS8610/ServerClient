@@ -50,6 +50,7 @@ public class Server
         ServerSocket serverSocket = null;
         
         serverSocket = new ServerSocket(portNo); //listening to port 3000
+        serverSocket.setReuseAddress(true); //needed for multi threaded server
         System.out.println("Server started. Waiting for connection...");
         
         while (true)
@@ -57,9 +58,13 @@ public class Server
             try 
             {
                 socket = serverSocket.accept(); //waiting for client to connect
-                System.out.println("Client connected..");
+                System.out.println("New Client connected " + socket.getInetAddress().getHostAddress());
                 inputStreamReader = new InputStreamReader(socket.getInputStream());
                 outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+
+                //create new thread object for multi threaded server
+                CookieClientHandler clientSock = new CookieClientHandler(socket);
+                new Thread(clientSock).start();
 
                 bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedWriter = new BufferedWriter(outputStreamWriter);
