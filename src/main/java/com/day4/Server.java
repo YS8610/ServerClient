@@ -31,21 +31,15 @@ public class Server
         int portNo = 3000;
         String fileName = "cookies.txt";
 
-        if (null!=args && args.length>0) //check for command line argument
+        if (null!=args && args.length==2) //check for command line argument
         {
-            String[] portFile = args[1].split(" ");
-            if (portFile.length==2)
-            {
-                portNo = Integer.parseInt(portFile[0]);
-                fileName = portFile[1];
-            }
-            else
-            {
-                System.out.println("Default portno: "+ portNo+"\n" + fileName+" will be used ");
-            }
+            portNo = Integer.parseInt(args[0]);
+            fileName = args[1];
         }
+        System.out.println("Server will listening at port "+portNo+" and reading "+fileName);
 
-        Cookie cookietxt = new Cookie("./cookies.txt");
+        // Cookie cookietxt = new Cookie("./cookies.txt");
+        Cookie cookietxt = new Cookie(fileName);
         List<String> listofCookies = cookietxt.readCookie();
         
         Socket socket = null;
@@ -55,7 +49,7 @@ public class Server
         BufferedWriter bufferedWriter = null;
         ServerSocket serverSocket = null;
         
-        serverSocket = new ServerSocket(3000); //listening to port 3000
+        serverSocket = new ServerSocket(portNo); //listening to port 3000
         System.out.println("Server started. Waiting for connection...");
         
         while (true)
