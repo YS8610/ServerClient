@@ -59,13 +59,19 @@ public class Client
             {
                 String msg = scanner.nextLine();
                 sendmsg(bufferedWriter, msg);
-
-                System.out.println("Server: " + bufferedReader.readLine());
-
+                String msgfromServer = bufferedReader.readLine();
                 if (msg.equalsIgnoreCase("close"))
                 {
                     scanner.close();
                     break;
+                }
+                else if (msgfromServer.length()>=11 && msgfromServer.substring(0,11).equals("cookie-text"))
+                {
+                    System.out.println("Server: " + msgfromServer.substring(11).trim());
+                }
+                else
+                {
+                    System.out.println("Server: " + msgfromServer);
                 }
             }
         }
