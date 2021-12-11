@@ -2,25 +2,49 @@ package com.day4;
 
 import java.io.*;
 import java.net.*;
-// import java.nio.file.Files;
-// import java.nio.file.Paths;
-// import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+// import java.util.List;
+// import java.util.Random;
 
 
 public class Server 
 {
-    // function to send msg from server to client
-    static public void sendmsg(BufferedWriter bufferedWriter, String msg)
+
+    private ServerSocket serverSocket;
+
+    private Server(ServerSocket serverSocket)
     {
-        try 
+        this.serverSocket = serverSocket;
+    }
+
+    public void startServer(String filename)
+    {
+        while(!serverSocket.isClosed())
         {
-            bufferedWriter.write(msg);
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
-        } 
-        catch (IOException e) 
+            try 
+            {
+                Socket socket = serverSocket.accept();
+                System.out.println("New Client connected!");
+                CookieClientHandler cookieClientHandler = new CookieClientHandler(socket,filename);
+    
+                Thread thread = new Thread(cookieClientHandler);
+                thread.start();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void closeServerSocket()
+    {
+        try
+        {
+            if(serverSocket!=null)
+            {
+                serverSocket.close();
+            }
+        } catch (IOException e)
         {
             e.printStackTrace();
         }
@@ -36,73 +60,10 @@ public class Server
             portNo = Integer.parseInt(args[0]);
             fileName = args[1];
         }
-        System.out.println("Server will listening at port "+portNo+" and reading "+fileName);
+        System.out.println("Server will listening at port "+ portNo+" and reading "+ fileName);
 
-        // Cookie cookietxt = new Cookie("./cookies.txt");
-        Cookie cookietxt = new Cookie(fileName);
-        List<String> listofCookies = cookietxt.readCookie();
-        
-        Socket socket = null;
-        InputStreamReader inputStreamReader = null;
-        OutputStreamWriter outputStreamWriter = null;
-        BufferedReader bufferedReader = null;
-        BufferedWriter bufferedWriter = null;
-        ServerSocket serverSocket = null;
-        
-        serverSocket = new ServerSocket(portNo); //listening to port 3000
-        serverSocket.setReuseAddress(true); //needed for multi threaded server
-        System.out.println("Server started. Waiting for connection...");
-        
-        while (true)
-        {
-            try 
-            {
-                socket = serverSocket.accept(); //waiting for client to connect
-                System.out.println("New Client connected " + socket.getInetAddress().getHostAddress());
-                inputStreamReader = new InputStreamReader(socket.getInputStream());
-                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-                //create new thread object for multi threaded server
-                CookieClientHandler clientSock = new CookieClientHandler(socket);
-                new Thread(clientSock).start();
-
-                bufferedReader = new BufferedReader(inputStreamReader);
-                bufferedWriter = new BufferedWriter(outputStreamWriter);
-
-                while (true)
-                {
-                    String msgfromclient = bufferedReader.readLine(); //receive msg from client
-                    System.out.println("Client: " + msgfromclient);
-                    
-                    
-                    if (msgfromclient.equalsIgnoreCase("close"))
-                    {
-                        break;
-                    }
-                    else if (msgfromclient.equalsIgnoreCase("get-cookies"))
-                    {
-                        String randomCookie = listofCookies.get(new Random().nextInt(listofCookies.size()));
-                        sendmsg(bufferedWriter, "cookie-text " + randomCookie);
-                    }
-                    else
-                    {
-                        sendmsg(bufferedWriter, "Wrong command. Only 2 commands(get-cookies and close) are accepted.");
-                    }
-                }
-
-                socket.close();
-                inputStreamReader.close();
-                outputStreamWriter.close();
-                bufferedReader.close();
-                bufferedWriter.close();
-                serverSocket.close();
-                break;
-
-            } 
-            catch (IOException e) 
-            {
-                e.printStackTrace();
-            }
-        }
+        ServerSocket serverSocket = new ServerSocket(portNo);
+        Server server = new Server(serverSocket);
+        server.startServer(fileName);
     }
 }
