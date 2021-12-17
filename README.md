@@ -1,6 +1,6 @@
 # ServerClient
 Server/Client Java which serves only 1 client at any time due to blocking IO. Client can end connection by typing close<br>
-Server will send a random text from cookies.txt in the root directory when client send "get-cookies
+Server will send a random text from cookies.txt in the root directory when client send `get-cookies`
 
 ## Default setting
 Default port for server is 3000.<br>
