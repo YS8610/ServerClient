@@ -1,5 +1,5 @@
 # ServerClient
-Server/Client Java with thread so multiple client can be served at the same time. Multiple Clients are being handled by CookieClientHandler class. Client can end connection by typing close  
+Server/Client Java with thread so multiple client can be served at the same time. Multiple Clients are being handled by CookieClientHandler class. Client can end connection by typing close<br><br>
 Server will send a random text from cookies.txt in the root directory when client send "get-cookies
 
 ## Default setting
