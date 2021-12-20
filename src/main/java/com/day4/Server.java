@@ -1,103 +1,104 @@
 package com.day4;
 
 import java.io.*;
-import java.net.*;
-// import java.nio.file.Files;
-// import java.nio.file.Paths;
-// import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.net.ServerSocket;
+import java.net.Socket;
 
+public class Server {
+    
+    int port;
+    ServerSocket serverSocket;
+    String dir;
 
-public class Server 
-{
-    // function to send msg from server to client
-    static public void sendmsg(BufferedWriter bufferedWriter, String msg)
-    {
-        try 
-        {
-            bufferedWriter.write(msg);
+// constructor
+    public Server(){
+        this.port = 3000;
+        this.dir = "cookie.txt";
+    }
+    public Server(int port,String dir){
+        this.port = port;
+        this.dir = dir;
+    }
+//method
+    public void startServer(){
+        Socket socket=null;
+        BufferedReader bufferedReader=null;
+        BufferedWriter bufferedWriter=null;
+        Cookie cookie = new Cookie(this.dir);
+        try{
+            serverSocket = new ServerSocket(this.port);
+            System.out.println("Server is starting at port "+ this.port);
+            socket = serverSocket.accept();
+            bufferedWriter = new BufferedWriter( new OutputStreamWriter(socket.getOutputStream()) );
+            bufferedReader = new BufferedReader( new InputStreamReader(socket.getInputStream()) );
+            System.out.println("Client connected");
+            sendmsg(bufferedWriter,"Welcome to Fortune cookie server. To end connection, pls type close");
+            
+            while(socket.isBound() && !socket.isClosed()){
+                String msgfromClient =  bufferedReader.readLine();
+                System.out.println("Client: "+msgfromClient);
+                if (msgfromClient.trim().toLowerCase().equals("close")){
+                    break;
+                }
+                if (msgfromClient.trim().toLowerCase().equals("get-cookies")){
+                    sendmsg(bufferedWriter, "cookie-text "+cookie.randomCookie());
+                }
+                else{
+                    sendmsg(bufferedWriter, msgfromClient );
+                }
+            }
+            bufferedWriter.flush();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
+        finally{
+            closeAll(bufferedReader,bufferedWriter,socket);
+        }
+    }
+
+    public void sendmsg(BufferedWriter bufferedWriter, String msgtoClient){
+        try {
+            bufferedWriter.write(msgtoClient);
             bufferedWriter.newLine();
             bufferedWriter.flush();
-        } 
-        catch (IOException e) 
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main( String[] args ) throws UnknownHostException, IOException 
-    {
-        int portNo = 3000;
-        String fileName = "cookies.txt";
-
-        if (null!=args && args.length==2) //check for command line argument
-        {
-            portNo = Integer.parseInt(args[0]);
-            fileName = args[1];
+    public void closeAll(BufferedReader bufferedReader, BufferedWriter bufferedWriter, Socket socket){
+        try{
+            if (bufferedReader!=null){bufferedReader.close();}
+            if (bufferedWriter!=null){bufferedWriter.close();}
+            if (!socket.isClosed()){socket.close();}
         }
-        System.out.println("Server will listening at port "+portNo+" and reading "+fileName);
-
-        // Cookie cookietxt = new Cookie("./cookies.txt");
-        Cookie cookietxt = new Cookie(fileName);
-        List<String> listofCookies = cookietxt.readCookie();
-        
-        Socket socket = null;
-        InputStreamReader inputStreamReader = null;
-        OutputStreamWriter outputStreamWriter = null;
-        BufferedReader bufferedReader = null;
-        BufferedWriter bufferedWriter = null;
-        ServerSocket serverSocket = null;
-        
-        serverSocket = new ServerSocket(portNo); //listening to port 3000
-        System.out.println("Server started. Waiting for connection...");
-        
-        while (true)
-        {
-            try 
-            {
-                socket = serverSocket.accept(); //waiting for client to connect
-                System.out.println("Client connected..");
-                inputStreamReader = new InputStreamReader(socket.getInputStream());
-                outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
-
-                bufferedReader = new BufferedReader(inputStreamReader);
-                bufferedWriter = new BufferedWriter(outputStreamWriter);
-
-                while (true)
-                {
-                    String msgfromclient = bufferedReader.readLine(); //receive msg from client
-                    System.out.println("Client: " + msgfromclient);
-                    
-                    
-                    if (msgfromclient.equalsIgnoreCase("close"))
-                    {
-                        break;
-                    }
-                    else if (msgfromclient.equalsIgnoreCase("get-cookies"))
-                    {
-                        String randomCookie = listofCookies.get(new Random().nextInt(listofCookies.size()));
-                        sendmsg(bufferedWriter, "cookie-text " + randomCookie);
-                    }
-                    else
-                    {
-                        sendmsg(bufferedWriter, "Wrong command. Only 2 commands(get-cookies and close) are accepted.");
-                    }
-                }
-
-                socket.close();
-                inputStreamReader.close();
-                outputStreamWriter.close();
-                bufferedReader.close();
-                bufferedWriter.close();
-                serverSocket.close();
-                break;
-
-            } 
-            catch (IOException e) 
-            {
-                e.printStackTrace();
-            }
+        catch (IOException e){
+            e.printStackTrace();
         }
+    }
+
+    private static String[] parseArg(String[] args){
+        String[] a = {"3000","cookies.txt"};
+        if(args.length==0){
+            System.out.println("Default port 3000 and default file used is cookies.txt");
+        }
+        else if (args.length==2){
+            a[0] = args[0];
+            a[1] = args[1];
+            System.out.println("Port Used: "+ a[0]+" text file used: "+ a[1]);
+        }
+        else{
+            System.out.println("Default port 3000 and default file used is cookies.txt");
+        }
+        return a;
+    }
+
+    public static void main(String[] args) {
+        String[] parsedArg = parseArg(args);
+        int port = Integer.parseInt(parsedArg[0]);
+        String cookiefile = parsedArg[1];
+        Server server = new Server(port, cookiefile);
+        server.startServer();
     }
 }
