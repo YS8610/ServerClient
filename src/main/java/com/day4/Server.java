@@ -1,69 +1,65 @@
 package com.day4;
 
 import java.io.*;
-import java.net.*;
-// import java.util.List;
-// import java.util.Random;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+public class Server {
+    int port;
+    ServerSocket serverSocket;
+    String dir;
 
-public class Server 
-{
-
-    private ServerSocket serverSocket;
-
-    private Server(ServerSocket serverSocket)
-    {
-        this.serverSocket = serverSocket;
+// constructor
+    public Server(){
+        this.port = 3000;
+        this.dir = "cookie.txt";
     }
+    public Server(int port,String dir){
+        this.port = port;
+        this.dir = dir;
+    }
+//method
+    public void startServer() throws IOException{
+        Cookie cookie = new Cookie(this.dir);
+        ExecutorService threadPool = Executors.newFixedThreadPool(5); 
+        serverSocket = new ServerSocket(this.port);
 
-    public void startServer(String filename)
-    {
-        while(!serverSocket.isClosed())
-        {
-            try 
-            {
-                Socket socket = serverSocket.accept();
-                System.out.println("New Client connected!");
-                CookieClientHandler cookieClientHandler = new CookieClientHandler(socket,filename);
-    
-                Thread thread = new Thread(cookieClientHandler);
-                thread.start();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
+        while (!serverSocket.isClosed()){
+            Socket socket = serverSocket.accept();
+            CookieClientHandler cookieClientHandler = new CookieClientHandler(socket,cookie);
+            threadPool.submit(cookieClientHandler);
+            // new Thread(cookieClientHandler).start();
         }
     }
 
-    public void closeServerSocket()
-    {
-        try
-        {
-            if(serverSocket!=null)
-            {
-                serverSocket.close();
-            }
-        } catch (IOException e)
-        {
+    private static String[] parseArg(String[] args){
+        String[] a = {"3000","cookies.txt"};
+        if(args.length==0){
+            System.out.println("Default port 3000 and default file used is cookies.txt");
+        }
+        else if (args.length==2){
+            a[0] = args[0];
+            a[1] = args[1];
+            System.out.println("Port Used: "+ a[0]+" text file used: "+ a[1]);
+        }
+        else{
+            System.out.println("Default port 3000 and default file used is cookies.txt");
+        }
+        return a;
+    }
+
+    public static void main(String[] args) {
+        String[] parsedArg = parseArg(args);
+        int port = Integer.parseInt(parsedArg[0]);
+        String cookiefile = parsedArg[1];
+        Server server = new Server(port, cookiefile);
+        try {
+            server.startServer();
+        } 
+        catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main( String[] args ) throws UnknownHostException, IOException 
-    {
-        int portNo = 3000;
-        String fileName = "cookies.txt";
-
-        if (null!=args && args.length==2) //check for command line argument
-        {
-            portNo = Integer.parseInt(args[0]);
-            fileName = args[1];
-        }
-        System.out.println("Server will listening at port "+ portNo+" and reading "+ fileName);
-
-        ServerSocket serverSocket = new ServerSocket(portNo);
-        Server server = new Server(serverSocket);
-        server.startServer(fileName);
     }
 }

@@ -6,94 +6,98 @@ import java.util.Scanner;
 
 public class Client 
 {
-    //function to send msg from client to server
-    public static void sendmsg(BufferedWriter bufferedWriter, String msg)
-    {
-        try
-        {
-            bufferedWriter.write(msg);
+    String ip;
+    int port;
+
+    //Constructor
+    public Client(){
+        this.port = 3000;
+        this.ip = "127.0.0.1";
+    }
+    public Client(String ip, int port){
+        this.ip = ip;
+        this.port = port;
+    }
+
+//method
+    private void writemsg(BufferedWriter bufferedWriter, String msgtoServer){
+        try {
+            bufferedWriter.write(msgtoServer);
             bufferedWriter.newLine();
             bufferedWriter.flush();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) 
-    {
-
-        String ip = "127.0.0.1";
-        int portNo = 3000;
-
-        if (null!=args && args.length>0) //check for command line argument
-        {
-            String[] ipPort = args[0].split(":");
-            if (ipPort.length==2)
-            {
-                ip = ipPort[0];
-                portNo = Integer.parseInt(ipPort[1]);
-            }
-        }
-        System.out.println("Connecting to ip: "+ip + " port: " + portNo);
-
-        Socket socket = null;
-        InputStreamReader inputStreamReader = null;
-        OutputStreamWriter outputStreamWriter = null;
+    public void startClient(){
+        Socket socket =null;
         BufferedReader bufferedReader = null;
         BufferedWriter bufferedWriter = null;
-        
-        try 
-        {
-            socket = new Socket(ip,portNo); //Connect to server 
-            System.out.println("Connected. Accepting input...");
-            inputStreamReader = new InputStreamReader(socket.getInputStream()); //read from server
-            outputStreamWriter = new OutputStreamWriter(socket.getOutputStream()); //send stuff to server
+        Scanner scan = new Scanner(System.in);
 
-            bufferedReader = new BufferedReader(inputStreamReader); // handle the data more efficient
-            bufferedWriter = new BufferedWriter(outputStreamWriter);
-            
-            Scanner scanner = new Scanner(System.in);
-            
-            while (true)
-            {
-                String msg = scanner.nextLine();
-                sendmsg(bufferedWriter, msg);
+        try {
+            socket = new Socket(this.ip, this.port);
+            bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            while(true){
                 String msgfromServer = bufferedReader.readLine();
-                if (msg.equalsIgnoreCase("close"))
-                {
-                    scanner.close();
+                parseServerMsg(msgfromServer);
+                String msgtoServer = scan.nextLine();
+                writemsg(bufferedWriter, msgtoServer);
+                if ("close".equals(msgtoServer)){
                     break;
                 }
-                else if (msgfromServer.length()>=11 && msgfromServer.substring(0,11).equals("cookie-text"))
-                {
-                    System.out.println("Server: " + msgfromServer.substring(11).trim());
-                }
-                else
-                {
-                    System.out.println("Server: " + msgfromServer);
-                }
             }
         }
-        catch (IOException e)
-        {
+        catch (IOException e) {
             e.printStackTrace();
         }
-        finally
-        {
-            try
-            {
-                if (socket!=null) socket.close();
-                if (inputStreamReader != null) inputStreamReader.close();
-                if (outputStreamWriter != null) outputStreamWriter.close();
-                if (bufferedReader != null) bufferedReader.close();
-                if (bufferedWriter != null) bufferedWriter.close();
+        finally{
+            try{
+                scan.close();
+                if (bufferedReader !=null){bufferedReader.close();}
+                if (bufferedWriter !=null){bufferedWriter.close();}
+                if (!socket.isClosed()){socket.close();}
             }
-            catch (IOException e)
-            {
+            catch(IOException e){
                 e.printStackTrace();
             }
         }
+    }
+    private void parseServerMsg(String msgfromServer){
+        if (msgfromServer.length()>=11 && msgfromServer.substring(0, 11).equals("cookie-text")){
+            System.out.println("Server: "+msgfromServer.substring(11).trim());
+        }
+        else{
+            System.out.println("Server: "+msgfromServer);
+        }
+    }
+
+    private static String[] parseArg(String[] args) {
+        String[] a = {"127.0.0.1","3000"};
+        if (args.length==1 && args[0].contains(":")){
+            a[0] = args[0].split(":")[0];
+            a[1] = args[0].split(":")[1];
+        }
+        else{
+            System.out.println("Ip connected: "+ a[0]+ "\nPort Used: "+a[1]);
+        }
+        return a;
+    }
+
+    public static void main(String[] args) {
+        String[] parsedArgs = parseArg(args);
+        String ip = parsedArgs[0];
+        int port;
+        try{
+            port = Integer.parseInt( parsedArgs[1]);
+        }
+        catch (NumberFormatException e){
+            port = 3000;
+            System.out.println("Port used will be " + port);
+        }
+        Client client = new Client(ip,port);
+        client.startClient();
     }
 }

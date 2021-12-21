@@ -2,99 +2,68 @@ package com.day4;
 
 import java.io.*;
 import java.net.*;
-import java.util.List;
-import java.util.Random;
+
 
 class CookieClientHandler implements Runnable
 {
-    private Socket socket;
-    private List<String> listofCookies;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
+    Socket socket;
+    Cookie cookie;
+    
+    public CookieClientHandler(Socket socket, Cookie cookie){
+        this.socket = socket;
+        this.cookie = cookie;
+    }
 
-    public CookieClientHandler(Socket socket, String filename)
-    {
-        try 
-        {
-            this.socket = socket;
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            Cookie cookie = new Cookie(filename);
-            listofCookies = cookie.readCookie();
-        } 
-        catch (IOException e) 
-        {
-            closeEverything(socket, bufferedReader, bufferedWriter);
+    public void run(){
+        BufferedReader bufferedReader = null;
+        BufferedWriter bufferedWriter = null;
+        try{
+            bufferedWriter = new BufferedWriter( new OutputStreamWriter(socket.getOutputStream()) );
+            bufferedReader = new BufferedReader( new InputStreamReader(socket.getInputStream()) );
+            System.out.println("Client connected");
+            sendmsg(bufferedWriter,"Welcome to Fortune cookie server. To end connection, pls type close");
+            
+            while(socket.isBound() && !socket.isClosed()){
+                String msgfromClient =  bufferedReader.readLine();
+                System.out.println("Client: "+msgfromClient);
+                if (msgfromClient.trim().toLowerCase().equals("close")){
+                    break;
+                }
+                if (msgfromClient.trim().toLowerCase().equals("get-cookies")){
+                    sendmsg(bufferedWriter, "cookie-text "+cookie.randomCookie());
+                }
+                else{
+                    sendmsg(bufferedWriter, msgfromClient );
+                }
+            }
+            bufferedWriter.flush();
+        }
+        catch(IOException e){
             e.printStackTrace();
+        }
+        finally{
+            closeAll(bufferedReader,bufferedWriter,socket);
         }
     }
 
-    public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter)
-    {
-        try
-        {
-            if (bufferedReader!=null) bufferedReader.close();
-            if (bufferedWriter!=null) bufferedWriter.close();
-            if (socket!=null) socket.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    // function to send msg from server to client
-    public void sendmsg(BufferedWriter bufferedWriter, String msg)
-    {
-        try 
-        {
-            bufferedWriter.write(msg);
+    public void sendmsg(BufferedWriter bufferedWriter, String msgtoClient){
+        try {
+            bufferedWriter.write(msgtoClient);
             bufferedWriter.newLine();
             bufferedWriter.flush();
-        } 
-        catch (IOException e) 
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public void run()
-    {
-        while (socket.isConnected())
-        {
-            try
-            {
-                while (true)
-                {
-                    String msgfromclient = bufferedReader.readLine(); //receive msg from client
-                    System.out.println("Client: " + msgfromclient);
-                    
-                    if (msgfromclient.equalsIgnoreCase("close"))
-                    {
-                        bufferedReader.close();
-                        bufferedWriter.close();
-                        socket.close();
-                        break;
-
-                    }
-                    else if (msgfromclient.equalsIgnoreCase("get-cookies"))
-                    {
-                        String randomCookie = listofCookies.get(new Random().nextInt(listofCookies.size()));
-                        sendmsg(bufferedWriter, "cookie-text " + randomCookie);
-                    }
-                    else
-                    {
-                        sendmsg(bufferedWriter, "Wrong command. Only 2 commands(get-cookies and close) are accepted.");
-                    }
-                }
-            } 
-            catch (IOException e)
-            {
-                closeEverything(socket, bufferedReader, bufferedWriter);
-                e.printStackTrace();
-                break;
-            }
+    public void closeAll(BufferedReader bufferedReader, BufferedWriter bufferedWriter, Socket socket){
+        try{
+            if (bufferedReader!=null){bufferedReader.close();}
+            if (bufferedWriter!=null){bufferedWriter.close();}
+            if (!socket.isClosed()){socket.close();}
+        }
+        catch (IOException e){
+            e.printStackTrace();
         }
     }
 }
